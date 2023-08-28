@@ -1,0 +1,83 @@
+<link href="/assets/home/css/center.css" rel="stylesheet" />
+
+<!-- 头部 -->
+<div class="user">
+    <div class="avatar wow fadeInUp">
+        <img src="{$LoginBusiness.avatar_cdn}" />
+    </div>
+
+    <div class="nickname wow fadeInUp" data-wow-delay="100ms">{$LoginBusiness.nickname ?: $LoginBusiness.mobile_text}
+    </div>
+</div>
+
+<!-- 菜单 -->
+<!--? 菜单 -->
+<!--! 菜单 -->
+<!--todo 菜单 -->
+
+
+<div class="menulist wow fadeInUp" data-wow-delay="300ms">
+    <a href="{:url('/home/business/profile')}" class="item">
+        <span>基本资料</span>
+        <img src='/assets/home/images/row.png' />
+    </a>
+    {if condition="$LoginBusiness.auth == 0"}
+    <a href="{:url('/home/business/email')}" class="item">
+        <span>邮箱认证</span>
+        <img src='/assets/home/images/row.png' />
+    </a>
+    {/if}
+    <a href="order.html" class="item">
+        <span>我的订单</span>
+        <img src='/assets/home/images/row.png' />
+    </a>
+    <a href="record.html" class="item">
+        <span>我的消费</span>
+        <img src='/assets/home/images/row.png' />
+    </a>
+    <a href="recharge.html" class="item">
+        <span>充值</span>
+        <img src='/assets/home/images/row.png' />
+    </a>
+    <a href="contact.html" class="item">
+        <span>联系我们</span>
+        <img src='/assets/home/images/row.png' />
+    </a>
+    <a id="logout" href="javascript:void(0)" class="item">
+        <span>退出</span>
+        <img src='/assets/home/images/row.png' />
+    </a>
+</div>
+
+<!-- 引入底部 -->
+{include file='common/footer'/}
+<script>
+    $('#logout').click(() => {
+        mui.confirm(
+            '是否确认退出',
+            '退出提醒',
+            ['确认', '取消'],
+            function (res) {
+                if (res.index === 0) {
+                    $.ajax({
+                        type: 'post',
+                        url: `{:url('/home/index/logout')}`,
+                        dataType: 'json',
+                        success: function (result) {
+                            if (result.code === 1) {
+                                mui.toast(result.msg);
+
+                                $('.mui-popup-backdrop').remove()
+                                $('.mui-popup').remove()
+
+                                setInterval(() => {
+                                    location.href = `{:url('/home/index/login')}`;
+                                }, 2000);
+                            }
+                        }
+                    });
+                }
+            }
+        )
+    })
+</script>

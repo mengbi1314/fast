@@ -1,0 +1,266 @@
+<link rel="stylesheet" href="/assets/home/css/details.css">
+<link rel="stylesheet" href="/assets/home/plugin/ckplayer/css/ckplayer.css">
+<header class="mui-bar mui-bar-nav mui-bar-nav-bg">
+    <!--  左边  -->
+    <a id="icon-menu" style="touch-action: none;" class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+    <!-- 标题 -->
+    <h1 class="mui-title">课程详情</h1>
+</header>
+<div class="mui-content">
+    <div id="cover">
+        <!-- 课程封面 -->
+        <img class="cover_bg" src="{$subject.thumbs_cdn}">
+        <!-- 中间播放键 -->
+        <div id="play">
+            <img src="/assets/home/images/play.png" />
+        </div>
+    </div>
+
+    <!-- ckplayer视频容器元素 -->
+    <div id="video"></div>
+    <!-- 课程信息 -->
+    <div class="head">
+        <div class="info">
+            <h4 class="name">{$subject.title}</h4>
+            <div class="action">
+                <!-- 点赞 -->
+                <!-- <img class="thumbs" src="./assets/images/thumbs-up.png" alt=""> -->
+
+                <!-- 未点赞 -->
+                <img class="thumbs"
+                    src="{$subject.like_status ? '/assets/home/images/thumbs-up.png' : '/assets/home/images/thumbs.png'}"
+                    alt="">
+                <span class="num">{$subject.likes_count}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="title">课程简介</div>
+    <table class="list">
+        <tr>
+            <td>课程名称</td>
+            <td>{$subject.title}</td>
+        </tr>
+        <tr class="price">
+            <td>课程价格</td>
+            <td>￥{$subject.price}元</td>
+        </tr>
+        <tr>
+            <td>发布时间</td>
+            <td>{$subject.createtime_text}</td>
+        </tr>
+        <tr>
+            <td>章节总数</td>
+            <td>{$count}小节</td>
+        </tr>
+    </table>
+
+    <div class="title">课程介绍</div>
+    <div class="mui-table-view content">{$subject.content}</div>
+
+    <div class="title">课程章节</div>
+    <ul class="mui-table-view">
+        {if condition="$count > 0"}
+        {foreach($ChapterList as $key=> $item)}
+        <li onclick="toggle('{$item.id}')" class="mui-table-view-cell">{$key+1}.{$item.title}</li>
+        {/foreach}
+        {else /}
+        <li class="mui-table-view-cell">暂无课程章节</li>
+        {/if}
+    </ul>
+
+    <div class="title">用户评论</div>
+
+    <!-- 评论内容 -->
+    <ul class="mui-table-view">
+        {if condition="count($CommentList) > 0"}
+        {foreach($CommentList as $item)}
+        <li class="mui-table-view-cell mui-media">
+            <a href="javascript:;">
+                <img class="mui-media-object mui-pull-left userimg" src="{$item.business.avatar_cdn}">
+                <div class="mui-media-body">
+                    {$item.business.nickname ?? '未知昵称'}
+                    <p class='mui-ellipsis'>{$item.content}</p>
+                </div>
+            </a>
+        </li>
+        {/foreach}
+        {else /}
+        <li class="mui-table-view-cell mui-media">
+            暂无评论
+        </li>
+        {/if}
+    </ul>
+    {if condition="count($CommentList) > 0"}
+    <div class="more">
+        <a href="{:url('/home/subject/comment/index',['subid' => $subject.id])}"
+            class="mui-btn mui-btn-primary mui-btn-outlined">查看更多评论</a>
+    </div>
+    {/if}
+
+    <!-- 弹出菜单 -->
+    <div id="sheet1" class="mui-popover mui-popover-bottom mui-popover-action">
+        <!-- 可选择菜单 -->
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a id="buy" href="javascript:void(0)">
+                    立即购买
+                </a>
+            </li>
+        </ul>
+        <!-- 取消菜单 -->
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#sheet1"><b>取消</b></a>
+            </li>
+        </ul>
+    </div>
+
+    <button id="back-to-top" style="position: fixed;bottom:5vw;right:5vw;">回到顶部</button>
+</div>
+
+<!-- 加载ckplayer视频插件 -->
+<script src="/assets/home/plugin/ckplayer/js/ckplayer.js"></script>
+
+<script>
+    // 课程id
+    let subid = "{$subject.id}";
+
+    // 定义一个章节的id
+    let cid = 0;
+
+    // 播放器对象
+    let player = null;
+
+    // 切换章节
+    function toggle(id) {
+        cid = id;
+        if (player) {
+            player.pause()
+            player.remove()
+        }
+        $('html, body').animate({ scrollTop: 0 }, 800);
+        $('#cover').css('display', 'block')
+        $('#video').css('display', 'none')
+    }
+
+    // 点击播放
+    $("#play").on('click', function () {
+        $.ajax({
+            type: 'post',
+            url: `{:url('/home/subject/subject/play')}`,
+            data: {
+                subid,
+                cid
+            },
+            dataType: 'json',
+            success: function (res) {
+                if (res.code === 0) {
+                    mui.toast(res.msg)
+                    let url = res?.url;
+                    setTimeout(() => {
+                        if (url) {
+                            location.href = url;
+                        }
+                    }, 2000)
+                    if (res.data.buy === true) {
+                        mui('#sheet1').popover('toggle')
+                    }
+                    return
+                }
+                let url = res.data?.url;
+
+                if (!url) {
+                    mui.toast(res.msg)
+                    return
+                }
+                $('#cover').css('display', 'none')
+                $('#video').css('display', 'block')
+
+                var videoObject = {
+                    container: '#video',                 //视频容器
+                    video: url,                          //视频地址
+                    volume: 1,                           //默认音量
+                    autoplay: true,
+                };
+                player = new ckplayer(videoObject)
+            }
+        })
+    });
+
+    function Paydata() {
+        mui('#sheet1').popover('toggle');
+    }
+
+    $("#buy").on('click', function () {
+        mui('#sheet1').popover('toggle');
+        var btnArray = ['否', '是'];
+        mui.confirm('请问您确认购买吗？', '尊敬的用户', btnArray, function (e) {
+            if (e.index === 1) {
+                $.ajax({
+                    type: 'post',
+                    url: `{:url('/home/subject/subject/buy')}`,
+                    data: {
+                        subid
+                    },
+                    dataType: 'json',
+                    success: function (res) {
+                        if (res.code === 1) {
+                            mui.toast(res.msg);
+                            return;
+                        } else {
+                            mui.toast(res.msg);
+                            return;
+                        }
+                    }
+                })
+
+            }
+        })
+    })
+
+    // 点赞以及取消点赞
+    $('.action').click(function () {
+        $.ajax({
+            type: 'post',
+            url: `{:url('/home/subject/subject/like')}`,
+            data: {
+                subid: subid
+            },
+            dataType: 'json',
+            success: function (res) {
+                if (res.code === 1) {
+                    let status = res.msg.includes('取消点赞成功')
+                    if (status === true) {
+                        $('.thumbs').attr('src', '/assets/home/images/thumbs.png');
+                        $('.num').text(parseInt($('.num').text()) - 1);
+                    } else {
+                        $('.thumbs').attr('src', '/assets/home/images/thumbs-up.png');
+                        $('.num').text(parseInt($('.num').text()) + 1);
+                    }
+                    return;
+                } else {
+                    mui.toast(res.msg)
+                    return
+                }
+
+            }
+        })
+    })
+
+
+    $(document).ready(function () {
+        $(window).scroll(function () {
+            if ($(this).scrollTop() > 100) { // 当滚动超过100像素时显示回到顶部按钮
+                $('#back-to-top').fadeIn();
+            } else {
+                $('#back-to-top').fadeOut();
+            }
+        });
+
+        $('#back-to-top').click(function () {
+            $('html, body').animate({ scrollTop: 0 }, 800); // 动画返回顶部，速度为800毫秒
+        });
+    });
+
+</script>
