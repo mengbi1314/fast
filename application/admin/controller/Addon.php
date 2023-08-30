@@ -440,7 +440,6 @@ class Addon extends Backend
             try {
                 $json = Service::addons($params);
             } catch (\Exception $e) {
-
             }
             $rows = isset($json['rows']) ? $json['rows'] : [];
             foreach ($rows as $index => $row) {
@@ -450,5 +449,4 @@ class Addon extends Backend
         }
         return $onlineaddons;
     }
-
 }

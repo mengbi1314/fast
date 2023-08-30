@@ -3,23 +3,27 @@
 
 <link href="/assets/home/css/order.css" rel="stylesheet" />
 
-<header class="mui-bar mui-bar-nav mui-bar-nav-bg">
-    <a id="icon-menu" style="touch-action: none;" class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
-    <h1 class="mui-title">消费记录</h1>
+<!-- 头部 -->
+<header>
+    <div class="left">
+        <a href="{:url('/home/business/index')}">
+            返回
+        </a>
+    </div>
+    <div class="title">消费记录</div>
+    <div class="right"></div>
 </header>
 
-<div class="mui-content">
-    <div class="page__bd" style="height: 100%;">
-        <div class="weui-tab mescroll" id="record">
-            <div class="weui-tab__panel">
-            </div>
+<div class="page__bd" style="height: 100%;">
+    <div class="weui-tab mescroll" id="record">
+        <div class="weui-tab__panel">
         </div>
     </div>
 </div>
 
 <!-- 下拉刷新 上拉加载的插件 -->
 <script src="/assets/home/plugin/mescroll/mescroll.min.js"></script>
-<script src="/assets/utils/formatDate.js"></script>
+
 <script>
     // 当前页
     var page = 1;
@@ -108,7 +112,7 @@
                     </div>
                     <div class="weui-form-preview__item">
                         <label class="weui-form-preview__label">消费时间</label>
-                        <span class="weui-form-preview__value">${formatDate(item.createtime)}</span>
+                        <span class="weui-form-preview__value">${item.createtime}</span>
                     </div>
                 </div>
             </div>

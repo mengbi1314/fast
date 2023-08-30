@@ -4,24 +4,22 @@ namespace app\admin\controller\subject;
 
 use app\common\controller\Backend;
 
-
 class Category extends Backend
 {
-    /**
-     * Subject模型对象
-     * @var \app\common\model\subject\Category
-     */
+    // 当前对象的模型
     protected $model = null;
-
 
     public function __construct()
     {
         parent::__construct();
+
         // 加载模型
         $this->model = model('subject.Category');
     }
+
     public function index()
     {
+        // 设置过滤方法
         $this->request->filter(['strip_tags', 'trim']);
 
         if ($this->request->isAjax()) {
@@ -57,6 +55,14 @@ class Category extends Backend
                 $this->success();
             }
         }
+
+        $MaxWeight = $this->model->max('weight');
+
+        $weight = $MaxWeight ? $MaxWeight + 1 : 1;
+
+        $this->assign([
+            'weight' => $weight
+        ]);
 
         return $this->fetch();
     }
@@ -98,7 +104,7 @@ class Category extends Backend
 
         $list = $this->model->select($ids);
 
-        if (empty($list)) {
+        if (!$list) {
             $this->error('课程不存在');
         }
 

@@ -1,0 +1,26 @@
+header{
+    width: 100%;
+    height: 40px;
+    display: flex;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    z-index: 9999;
+}
+
+header .left{
+    width: 25%;
+    text-align: center;
+    font-size: 14px;
+}
+
+header .title{
+    text-align: center;
+    width: 50%;
+}
+
+header .right{
+    width: 25%;
+}
