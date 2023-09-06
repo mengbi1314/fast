@@ -59,4 +59,43 @@ class base extends Controller
             $this->success('注册成功');
         }
     }
+
+    public function login()
+    {
+        $mobile = $this->request->param('mobile', '', 'trim');
+        $password = $this->request->param('password', '', 'trim');
+
+        // 查询数据表里面是否有这个用户
+        $business = $this->BusinessModel->where(['mobile' => $mobile])->find();
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        // 判断密码是否正确
+        $password = md5($password . $business['salt']);
+
+        if ($password != $business['password']) {
+            $this->error('密码错误');
+        }
+
+        // 封装返回数据
+        $data = [
+            'id' => $business['id'],
+            'mobile' => $business['mobile'],
+            'mobile_text' => $business['mobile_text'],
+            'avatar' => $business['avatar'],
+            'avatar_cdn' => $business['avatar_cdn'],
+            'nickname' => $business['nickname'],
+            'email' => $business['email'],
+            'gender' => $business['gender'],
+            'province' => $business['province'],
+            'city' => $business['city'],
+            'district' => $business['district'],
+            'region_text' => $business['region_text'],
+            'auth' => $business['auth'],
+        ];
+
+        $this->success('登录成功', null, $data);
+    }
 }
