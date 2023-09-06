@@ -55,12 +55,12 @@ class Index extends Controller
 
             // 生成密码盐和哈希密码
             $salt = build_ranstr();
-            $hashedPassword = password_hash($password . $salt, PASSWORD_DEFAULT);
+            $password = md5($password . $salt);
 
             // 组装注册的数据
             $data = [
                 'mobile' => $mobile,
-                'password' => $hashedPassword,
+                'password' => $password,
                 'salt' => $salt,
                 'money' => 0,
                 'auth' => 0,
