@@ -47,7 +47,6 @@ class Business extends Model
 
         // 获取网站域名
         $cdn = Env::get('site.url', config('site.url'));
-
         return $cdn . $avatar;
     }
     public function getRegionTextAttr($value, $data)
