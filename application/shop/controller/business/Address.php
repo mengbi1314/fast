@@ -18,7 +18,21 @@ class Address extends Controller
 
     public function index()
     {
-        //
+        $busid = $this->request->param('busid', '', 'trim');
+
+        $business = model('business.Business')->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        $list = $this->AddressModel->where(['busid' => $busid])->select();
+
+        if ($list) {
+            $this->success('查询收货地址数据成功', null, $list);
+        } else {
+            $this->error('暂无收货地址');
+        }
     }
 
     public function add()
@@ -39,6 +53,8 @@ class Address extends Controller
             'address' => $params['address'],
             'status' => $params['status'],
         ];
+
+        $this->AddressModel->startTrans();
 
         if ($params['status'] == 1) {
             $this->AddressModel->where(['busid' => $params['busid']])->update(['status' => 0]);
@@ -64,9 +80,54 @@ class Address extends Controller
         $result = $this->AddressModel->validate('common/business/Address')->save($data);
 
         if ($result === false) {
+            $this->AddressModel->rollback();
             $this->error($this->AddressModel->getError());
         } else {
+            $this->AddressModel->commit();
             $this->success('添加成功');
+        }
+    }
+
+    public function selected()
+    {
+        $id = $this->request->param('id', '', 'trim');
+        $busid = $this->request->param('busid', '', 'trim');
+
+        $business = model('business.Business')->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        $address = $this->AddressModel->find($id);
+
+        if (!$address) {
+            $this->error('该收货地址不存在');
+        }
+
+        $auth = $this->AddressModel->where(['id' => $id, 'busid' => $busid])->find();
+
+        if (!$auth) {
+            $this->error('您没有权限修改他人的收货地址');
+        }
+
+        $this->AddressModel->startTrans();
+
+        $this->AddressModel->where(['busid' => $busid])->update(['status' => 0]);
+
+        $data = [
+            'id' => $id,
+            'status' => 1
+        ];
+
+        $result = $this->AddressModel->isUpdate(true)->save($data);
+
+        if ($result === false) {
+            $this->AddressModel->rollback();
+            $this->error('设置默认收货地址失败');
+        } else {
+            $this->AddressModel->commit();
+            $this->success('设置默认收货地址成功');
         }
     }
 }
