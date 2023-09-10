@@ -2,14 +2,12 @@
 
 namespace app\shop\controller\product;
 
-
 use think\Controller;
 
 class Product extends Controller
 {
-    //商品模型
+    // 商品模型
     protected $ProductModel = null;
-
 
     public function __construct()
     {
@@ -50,5 +48,32 @@ class Product extends Controller
         } else {
             $this->error('暂无商品');
         }
+    }
+
+    public function info()
+    {
+        $id = $this->request->param('id', 0, 'trim');
+        $busid = $this->request->param('busid', 0, 'trim');
+
+        $product = $this->ProductModel->find($id);
+
+        if (!$product) {
+            $this->error('商品不存在');
+        }
+
+        $business = model('business.Business')->find($busid);
+
+        $product['collection_status'] = false;
+
+        if ($business) {
+            // 查询用户收藏表是否有这条收藏记录
+            $collection = model('business.Collection')->where(['proid' => $id, 'busid' => $busid])->find();
+
+            if ($collection) {
+                $product['collection_status'] = true;
+            }
+        }
+
+        $this->success('查询商品详情成功', null, $product);
     }
 }
