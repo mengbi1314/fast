@@ -125,4 +125,18 @@ class Cart extends Controller
             $this->success('更新该购物车商品数量成功');
         }
     }
+    public function address()
+    {
+        $busid = $this->request->param('busid', 0, 'trim');
+
+        $business = $this->BusinessModel->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        $address = model('business.Address')->where(['busid' => $busid, 'status' => 1])->find();
+
+        $this->success('查询默认地址成功', null, $address);
+    }
 }
