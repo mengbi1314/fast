@@ -23,7 +23,21 @@ class Cart extends Controller
 
     public function index()
     {
-        //
+        $busid = $this->request->param('busid', 0, 'trim');
+
+        $business = $this->BusinessModel->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        $list =  $this->CartModel->with(['product'])->where(['busid' => $busid])->order('cart.id DESC')->select();
+
+        if ($list) {
+            $this->success('查询购物车数据成功', null, $list);
+        } else {
+            $this->error('空空如也');
+        }
     }
 
     public function add()
