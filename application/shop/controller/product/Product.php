@@ -76,4 +76,48 @@ class Product extends Controller
 
         $this->success('查询商品详情成功', null, $product);
     }
+
+    public function collection()
+    {
+        $proid = $this->request->param('proid', '', 'trim');
+        $busid = $this->request->param('busid', '', 'trim');
+
+        $business = model('business.Business')->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        $product = $this->ProductModel->find($proid);
+
+        if (!$product) {
+            $this->error('商品不存在');
+        }
+
+        $collection = model('business.Collection')->where(['busid' => $busid, 'proid' => $proid])->find();
+
+        $msg = '未知信息';
+
+        if ($collection) {
+            $result = $collection->delete();
+
+            $msg = '取消收藏';
+        } else {
+            // 封装插入数据
+            $data = [
+                'busid' => $busid,
+                'proid' => $proid,
+            ];
+
+            $result = model('business.Collection')->validate('common/business/Collection.product')->save($data);
+
+            $msg = '收藏';
+        }
+
+        if ($result === false) {
+            $this->error(model('business.Collection')->getError());
+        } else {
+            $this->success("{$msg}成功");
+        }
+    }
 }
