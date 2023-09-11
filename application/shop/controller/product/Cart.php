@@ -92,4 +92,37 @@ class Cart extends Controller
             $this->success('加入购物车成功');
         }
     }
+
+    public function update()
+    {
+        $busid = $this->request->param('busid', 0, 'trim');
+        $cartid = $this->request->param('cartid', 0, 'trim');
+        $pronum = $this->request->param('pronum', 0, 'trim');
+
+        $business = $this->BusinessModel->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        $cart = $this->CartModel->find($cartid);
+
+        if (!$cart) {
+            $this->error('用户不存在');
+        }
+
+        $data = [
+            'id' => $cartid,
+            'pronum' => $pronum,
+            'total' => bcmul($pronum, $cart['price'], 2)
+        ];
+
+        $result = $this->CartModel->isUpdate(true)->save($data);
+
+        if ($result === false) {
+            $this->error('更新该购物车商品数量失败');
+        } else {
+            $this->success('更新该购物车商品数量成功');
+        }
+    }
 }
