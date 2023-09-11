@@ -73,8 +73,10 @@ class Product extends Controller
                 $product['collection_status'] = true;
             }
         }
+        // 购物车的总数
+        $CartCount = model('product.Cart')->where(['busid' => $busid])->count();
 
-        $this->success('查询商品详情成功', null, $product);
+        $this->success('查询商品详情成功', null, ['CartCount' => $CartCount, 'product' => $product]);
     }
 
     public function collection()
