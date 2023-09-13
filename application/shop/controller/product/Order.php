@@ -35,7 +35,7 @@ class Order extends Controller
             'busid' => $busid,
         ];
 
-        if ($status === '-1') {
+        if ($status == '-1') {
             $where['status'] = ['IN', ['-1', '-2', '-3', '-4', '-5']];
         } elseif ($status || $status == '0') {
             $where['status'] = $status;
@@ -89,13 +89,6 @@ class Order extends Controller
             }
 
             $total += $item['total'];
-        }
-
-        // 结算了购物车后的余额
-        $UpdateMoney = bcsub($business['money'], $total, 2);
-
-        if ($UpdateMoney < 0) {
-            $this->error('余额不足，请及时充值');
         }
 
         /* 
@@ -181,6 +174,97 @@ class Order extends Controller
             $ProductModel->commit();
             $CartModel->commit();
             $this->success('下单成功');
+        }
+    }
+
+    public function pay()
+    {
+        $busid = $this->request->param('busid', 0, 'trim');
+        $orderid = $this->request->param('orderid', 0, 'trim');
+
+        $business = $this->BusinessModel->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        $order = $this->OrderModel->find($orderid);
+
+        if (!$order) {
+            $this->error('订单不存在');
+        }
+
+        // 结算了购物车后的余额
+        $UpdateMoney = bcsub($business['money'], $order['amount'], 2);
+
+        if ($UpdateMoney < 0) {
+            $this->error('余额不足，请及时充值');
+        }
+
+        /* 
+            更新订单状态
+            更新用户余额
+            新增消费记录
+        */
+
+        // 实例化模型
+        $RecordModel = model('business.Record');
+
+        // 开启事务
+        $this->OrderModel->startTrans();
+        $this->BusinessModel->startTrans();
+        $RecordModel->startTrans();
+
+        // 封装订单数据
+        $OrderData = [
+            'id' => $orderid,
+            'status' => 1,
+        ];
+
+        $OrderStatus = $this->OrderModel->isUpdate(true)->save($OrderData);
+
+        if ($OrderStatus === false) {
+            $this->error('更新订单状态失败');
+        }
+
+        // 更新用户余额
+        $BusinessData = [
+            'id' => $busid,
+            'money' => $UpdateMoney
+        ];
+
+        $BusinessStatus = $this->BusinessModel->isUpdate(true)->save($BusinessData);
+
+        if ($BusinessStatus === false) {
+            $this->OrderModel->rollback();
+            $this->error('更新用户余额失败');
+        }
+
+        // 新增消费记录
+        $RecordData = [
+            'busid' => $busid,
+            'total' => $order['amount'],
+            'content' => "您的订单{$order['code']}共消费了{$order['amount']}"
+        ];
+
+        $RecordStatus = $RecordModel->validate('common/business/Record')->save($RecordData);
+
+        if ($RecordStatus === false) {
+            $this->OrderModel->rollback();
+            $this->BusinessModel->rollback();
+            $this->error($RecordModel->getError());
+        }
+
+        if ($OrderStatus === false || $BusinessStatus === false || $RecordStatus === false) {
+            $this->OrderModel->rollback();
+            $this->BusinessModel->rollback();
+            $RecordModel->rollback();
+            $this->error('支付失败');
+        } else {
+            $this->OrderModel->commit();
+            $this->BusinessModel->commit();
+            $RecordModel->commit();
+            $this->success('支付成功');
         }
     }
 }
