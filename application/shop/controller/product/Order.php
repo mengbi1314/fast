@@ -26,6 +26,30 @@ class Order extends Controller
 
     public function index()
     {
+        $busid = $this->request->param('busid', 0, 'trim');
+        $page = $this->request->param('page', 1, 'trim');
+        $limit = $this->request->param('limit', 10, 'trim');
+        $status = $this->request->param('status', '', 'trim');
+
+        $where = [
+            'busid' => $busid,
+        ];
+
+        if ($status === '-1') {
+            $where['status'] = ['IN', ['-1', '-2', '-3', '-4', '-5']];
+        } elseif ($status || $status == '0') {
+            $where['status'] = $status;
+        }
+
+        $count = $this->OrderModel->where($where)->count();
+
+        $list = $this->OrderModel->with(['order_product' => ['products']])->where($where)->page($page, $limit)->order('createtime DESC')->select();
+
+        if ($list) {
+            $this->success('查询订单数据成功', null, ['count' => $count, 'list' => $list]);
+        } else {
+            $this->error('暂无订单');
+        }
     }
 
     public function confirm()
