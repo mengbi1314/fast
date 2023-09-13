@@ -139,4 +139,22 @@ class Cart extends Controller
 
         $this->success('查询默认地址成功', null, $address);
     }
+
+    public function info()
+    {
+        $cartids = $this->request->param('cartids', '', 'trim');
+        $busid = $this->request->param('busid', '', 'trim');
+        $business = $this->BusinessModel->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+        $list = $this->CartModel->with(['product'])->where(['cart.id' => ['IN', $cartids]])->select();
+
+        if ($list) {
+            $this->success('查询购物车详情成功', null, $list);
+        } else {
+            $this->error('需要结算的购物车不存在');
+        }
+    }
 }
