@@ -27,5 +27,21 @@ class Type extends Controller
     }
     public function product()
     {
+        $typeid = $this->request->param('typeid', 0, 'trim');
+
+        $where = [];
+
+        if ($typeid) {
+            $where['typeid'] = $typeid;
+        }
+        $count = model('product.Product')->where($where)->count();
+
+        $list = model('product.Product')->where($where)->order('createtime DESC')->select();
+
+        if ($list) {
+            $this->success('查询成功', null, ['count' => $count, 'list' => $list]);
+        } else {
+            $this->error('暂无商品');
+        }
     }
 }
