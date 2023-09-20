@@ -62,6 +62,34 @@ class Admin extends Controller
 
         $this->success('登录成功', null, $data);
     }
+    public function unbinding()
+    {
+        $id = $this->request->param('id', '', 'trim');
+
+        $admin = $this->AdminModel->find($id);
+
+        if (!$admin) {
+            $this->error('账号不存在');
+        }
+
+        if ($admin['status'] !== 'normal') {
+            $this->error('当前账号已被禁用');
+        }
+
+        // 封装更新管理员的数据
+        $data = [
+            'id' => $id,
+            'openid' => null
+        ];
+
+        $result = $this->AdminModel->isUpdate(true)->save($data);
+
+        if ($result === false) {
+            $this->error('解绑失败');
+        } else {
+            $this->success('解绑成功');
+        }
+    }
 
     public function bind()
     {
