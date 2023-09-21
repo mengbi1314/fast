@@ -216,6 +216,64 @@ class Admin extends Controller
         }
     }
 
+    public function profile()
+    {
+        $params = $this->request->param();
+
+        $admin = $this->AdminModel->find($params['id']);
+
+        if (!$admin) {
+            $this->error('当前管理员账号不存在');
+        }
+
+        if ($admin['status'] !== 'normal') {
+            $this->error('当前管理员账号已被禁用');
+        }
+
+        $data = [
+            'id' => $params['id'],
+            'nickname' => $params['nickname'],
+            'mobile' => $params['mobile'],
+            'email' => $params['email'],
+        ];
+
+        if (!empty($params['password'])) {
+            $repass = md5(md5($params['password']) . $admin['salt']);
+
+            if ($repass == $admin['password']) {
+                $this->error('新密码不能与旧密码相同');
+            }
+
+            $salt = build_ranstr();
+
+            $data['password'] = md5(md5($params['password']) . $salt);
+
+            $data['salt'] = $salt;
+        }
+
+        $result = $this->AdminModel->isUpdate(true)->save($data);
+
+        if ($result === false) {
+            $this->error('更新资料失败');
+        } else {
+
+            $admin = $this->AdminModel->find($params['id']);
+
+            $data = [
+                'id' => $admin['id'],
+                'username' => $admin['username'],
+                'nickname' => $admin['nickname'],
+                'avatar_cdn' => $admin['avatar_cdn'],
+                'avatar' => $admin['avatar'],
+                'email' => $admin['email'],
+                'mobile' => $admin['mobile'],
+                'group_text' => $admin['group_text'],
+                'createtime' => $admin['createtime']
+            ];
+
+            $this->success('更新资料成功', null, $data);
+        }
+    }
     // 获取登录用户的openid的方法
     private function code2Session($code)
     {
