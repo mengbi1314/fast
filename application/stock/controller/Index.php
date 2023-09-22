@@ -2,10 +2,65 @@
 
 namespace app\stock\controller;
 
-class Index
+use think\Controller;
+
+class Index extends Controller
 {
-    public function index()
+    protected $timeList = [];
+
+    public function __construct()
     {
-        return '<style type="text/css">*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} a{color:#2E5CD5;cursor: pointer;text-decoration: none} a:hover{text-decoration:underline; } body{ background: #fff; font-family: "Century Gothic","Microsoft yahei"; color: #333;font-size:18px;} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.6em; font-size: 42px }</style><div style="padding: 24px 48px;"> <h1>:)</h1><p> ThinkPHP V5<br/><span style="font-size:30px">十年磨一剑 - 为API开发设计的高性能框架</span></p><span style="font-size:22px;">[ V5.0 版本由 <a href="http://www.qiniu.com" target="qiniu">七牛云</a> 独家赞助发布 ]</span></div><script type="text/javascript" src="http://tajs.qq.com/stats?sId=9347272" charset="UTF-8"></script><script type="text/javascript" src="http://ad.topthink.com/Public/static/client.js"></script><thinkad id="ad_bd568ce7058a1091"></thinkad>';
+        parent::__construct();
+
+        $year = date('Y');
+
+        for ($i = 1; $i <= 12; $i++) {
+            $start = date('Y-m-01', strtotime($year . '-' . $i));
+
+            $end = date('Y-m-t', strtotime($year . '-' . $i));
+
+            $this->timeList[] = [$start, $end];
+        }
+    }
+
+    public function total()
+    {
+        $OrderCount = model('product.order.Order')->count();
+
+        $OrderMoney = model('product.order.Order')->sum('amount');
+
+        $BusinessCount = model('business.Business')->count();
+
+        $data = [
+            'OrderCount' => $OrderCount,
+            'OrderMoney' => $OrderMoney,
+            'BusinessCount' => $BusinessCount
+        ];
+
+        $this->success('查询成功', null, $data);
+    }
+
+    public function business()
+    {
+        $noCertifiedData = [];
+        $CertifiedData = [];
+
+        foreach ($this->timeList as $time) {
+            $noCertified = [
+                'auth' => 0,
+                'createtime' => ['between time', $time]
+            ];
+
+            $noCertifiedData[] = model('business.Business')->where($noCertified)->count();
+
+            $Certified = [
+                'auth' => 1,
+                'createtime' => ['between time', $time]
+            ];
+
+            $CertifiedData[] = model('business.Business')->where($Certified)->count();
+        }
+
+        $this->success('查询成功', null, ['noCertified' => $noCertifiedData, 'Certified' => $CertifiedData]);
     }
 }
