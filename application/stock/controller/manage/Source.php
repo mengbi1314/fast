@@ -3,83 +3,40 @@
 namespace app\stock\controller\manage;
 
 use think\Controller;
-use think\Request;
 
 class Source extends Controller
 {
-    /**
-     * 显示资源列表
-     *
-     * @return \think\Response
-     */
+    //管理员模型
+    protected $AdminModel = null;
+
+    //客户来源模型
+    protected $SourceModel = null;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->AdminModel = model('admin.Admin');
+        $this->SourceModel = model('business.Source');
+    }
+
     public function index()
     {
-        //
-    }
+        $admin = $this->AdminModel->find();
 
-    /**
-     * 显示创建资源表单页.
-     *
-     * @return \think\Response
-     */
-    public function create()
-    {
-        //
-    }
+        if (!$admin) {
+            $this->error('当前管理员账号不存在');
+        }
 
-    /**
-     * 保存新建的资源
-     *
-     * @param  \think\Request  $request
-     * @return \think\Response
-     */
-    public function save(Request $request)
-    {
-        //
-    }
+        if ($admin['status'] !== 'normal') {
+            $this->error('当前管理员账号已被禁用');
+        }
+        $list = $this->SourceModel->order('id DESC')->select();
 
-    /**
-     * 显示指定的资源
-     *
-     * @param  int  $id
-     * @return \think\Response
-     */
-    public function read($id)
-    {
-        //
-    }
-
-    /**
-     * 显示编辑资源表单页.
-     *
-     * @param  int  $id
-     * @return \think\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * 保存更新的资源
-     *
-     * @param  \think\Request  $request
-     * @param  int  $id
-     * @return \think\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * 删除指定资源
-     *
-     * @param  int  $id
-     * @return \think\Response
-     */
-    public function delete($id)
-    {
-        //
+        if ($list) {
+            $this->success('查询成功', null, $list);
+        } else {
+            $this->error('暂无客户来源');
+        }
     }
 }
