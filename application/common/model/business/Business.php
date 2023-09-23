@@ -2,41 +2,37 @@
 
 namespace app\common\model\business;
 
-use think\Model;
-
 use think\Env;
+use think\Model;
 
 class Business extends Model
 {
-    /** 指定的数据表 */
     protected $name = 'business';
-    /** 开启自动写入时间戳 */
     protected $autoWriteTimestamp = true;
-    /** 定义时间戳字段名 */
     protected $createTime = 'createtime';
-    /** 更新时间 */
     protected $updateTime = false;
-    /** 追加字段 */
     protected $append = [
+        // 文本 => text 资源 => cdn 总数 => count
         'mobile_text',
         'avatar_cdn',
-        'region_text'
-
+        'region_text',
+        'deal_text',
+        'gender_text'
     ];
-    /**
-     * 获取手机号将其加密
-     */
+
+    // 定义一个获取器
     public function getMobileTextAttr($value, $data)
     {
         $mobile = $data['mobile'] ?? '';
+
         if (empty($mobile)) {
             return false;
         }
+
         return substr_replace($mobile, '****', 3, 4);
     }
-    /**
-     * 获取头像
-     */
+
+    // 头像获取器
     public function getAvatarCdnAttr($value, $data)
     {
         $avatar = $data['avatar'] ?? '';
@@ -70,5 +66,23 @@ class Business extends Model
         }
 
         return $region_text;
+    }
+    public function source()
+    {
+        return $this->belongsTo('app\common\model\business\Source', 'sourceid', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
+
+    public function getDealTextAttr($value, $data)
+    {
+        $list = [0 => '未成交', 1 => '已成交'];
+
+        return $list[$data['deal']];
+    }
+
+    public function getGenderTextAttr($value, $data)
+    {
+        $genderList = [0 => '保密', 1 => '男', 2 => '女'];
+
+        return $genderList[$data['gender']];
     }
 }

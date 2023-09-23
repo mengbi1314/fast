@@ -63,4 +63,19 @@ class Index extends Controller
 
         $this->success('查询成功', null, ['noCertified' => $noCertifiedData, 'Certified' => $CertifiedData]);
     }
+
+    public function visit()
+    {
+        $VisitData = [];
+
+        foreach ($this->timeList as $time) {
+            $where = [
+                'createtime' => ['between time', $time]
+            ];
+
+            $VisitData[] = model('business.Visit')->where($where)->count();
+        }
+
+        $this->success('查询回访记录成功', null, $VisitData);
+    }
 }
