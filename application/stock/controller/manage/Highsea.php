@@ -13,6 +13,8 @@ class Highsea extends Controller
     // 管理员模型
     protected $AdminModel = null;
 
+    protected $Admin = [];
+
     public function __construct()
     {
         parent::__construct();
@@ -22,13 +24,13 @@ class Highsea extends Controller
 
         $adminid = $this->request->param('adminid', '', 'trim');
 
-        $admin = $this->AdminModel->find($adminid);
+        $this->Admin = $this->AdminModel->find($adminid);
 
-        if (!$admin) {
+        if (!$this->Admin) {
             $this->error('当前管理员账号不存在');
         }
 
-        if ($admin['status'] !== 'normal') {
+        if ($this->Admin['status'] !== 'normal') {
             $this->error('当前管理员账号已被禁用');
         }
     }
@@ -56,5 +58,56 @@ class Highsea extends Controller
         }
 
         $this->success('查询成功', null, $business);
+    }
+
+    public function apply()
+    {
+        $busid = $this->request->param('busid', 0, 'trim');
+
+        $business = $this->BusinessModel->find($busid);
+
+        if (!$business) {
+            $this->error('客户不存在');
+        }
+
+        $ReceiveModel = model('business.Receive');
+
+        // 开启事务
+        $this->BusinessModel->startTrans();
+        $ReceiveModel->startTrans();
+
+        $BusinessData = [
+            'id' => $busid,
+            'adminid' => $this->Admin['id']
+        ];
+
+        $BusinessStatus = $this->BusinessModel->isUpdate(true)->save($BusinessData);
+
+        if ($BusinessStatus === false) {
+            $this->error('更新用户数据失败');
+        }
+
+        $ReceiveData = [
+            'applyid' => $this->Admin['id'],
+            'status' => 'apply',
+            'busid' => $busid
+        ];
+
+        $ReceiveStatus = $ReceiveModel->validate('common/business/Receive')->save($ReceiveData);
+
+        if ($ReceiveStatus === false) {
+            $this->BusinessModel->rollback();
+            $this->error($ReceiveModel->getError());
+        }
+
+        if ($BusinessStatus === false || $ReceiveStatus === false) {
+            $this->BusinessModel->rollback();
+            $ReceiveModel->rollback();
+            $this->error('申请失败');
+        } else {
+            $this->BusinessModel->commit();
+            $ReceiveModel->commit();
+            $this->success('申请成功');
+        }
     }
 }
