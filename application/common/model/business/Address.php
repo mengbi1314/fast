@@ -3,51 +3,54 @@
 namespace app\common\model\business;
 
 use think\Model;
-// 引入软删除模型
+
+// 软删除的模型
 use traits\model\SoftDelete;
 
 class Address extends Model
 {
-    // 使用软删除模型
+    // 继承软删除
     use SoftDelete;
 
+    // 客户收货地址
     protected $name = 'business_address';
 
-    // 开启自动写入时间
+    // 指定一个自动设置的时间字段
+    // 开启自动写入
     protected $autoWriteTimestamp = true;
 
     // 设置字段的名字
-    protected $createTime = false;
+    protected $createTime = false; //插入的时候设置的字段名
 
-    // 禁止写入的时间字段
+    // 禁止 写入的时间字段
     protected $updateTime = false;
 
-    // 软删除字段
+    // 软删除的字段
     protected $deleteTime = 'deletetime';
 
-    protected $append = [
-        'region_text'
-    ];
-
-    public function getRegionTextAttr($value, $data)
+    // 给模型定义一个关联查询
+    public function provinces()
     {
-        $region_text = '';
+        // belongsTo('关联模型名','外键名','关联表主键名',['模型别名定义'],'join类型');
+        // 参数1：关联的模型
+        // 参数2：用户表的外键的字段
+        // 参数3：关联表的主键
+        // 参数4：模型别名
+        // 参数5：链接方式 left
+        // setEagerlyType(1) IN查询
+        // setEagerlyType(0) JOIN查询
+        return $this->belongsTo('app\common\model\Region', 'province', 'code', [], 'LEFT')->setEagerlyType(0);
+    }
 
-        $province = model('Region')->where(['code' => $data['province']])->value('name');
-        $city = model('Region')->where(['code' => $data['city']])->value('name');
-        $district = model('Region')->where(['code' => $data['district']])->value('name');
+    // 查询城市
+    public function citys()
+    {
+        return $this->belongsTo('app\common\model\Region', 'city', 'code', [], 'LEFT')->setEagerlyType(0);
+    }
 
-        if ($province) {
-            $region_text = $province;
-        }
-
-        if ($city) {
-            $region_text = $city;
-        }
-
-        if ($district) {
-            $region_text = $district;
-        }
-        return $region_text;
+    // 查询地区
+    public function districts()
+    {
+        return $this->belongsTo('app\common\model\Region', 'district', 'code', [], 'LEFT')->setEagerlyType(0);
     }
 }

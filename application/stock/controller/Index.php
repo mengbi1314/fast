@@ -8,9 +8,22 @@ class Index extends Controller
 {
     protected $timeList = [];
 
+    protected $ReceiveModel = null;
+    protected $OrderModel = null;
+    protected $SourceModel = null;
+    protected $BusinessModel = null;
+
     public function __construct()
     {
         parent::__construct();
+
+        $this->ReceiveModel = model('Business.Receive');
+
+        $this->OrderModel = model('product.order.Order');
+
+        $this->SourceModel = model('Business.Source');
+
+        $this->BusinessModel = model('Business.Business');
 
         $year = date('Y');
 
@@ -25,9 +38,9 @@ class Index extends Controller
 
     public function total()
     {
-        $OrderCount = model('product.order.Order')->count();
+        $OrderCount = model('product.order.order')->count();
 
-        $OrderMoney = model('product.order.Order')->sum('amount');
+        $OrderMoney = model('product.order.order')->sum('amount');
 
         $BusinessCount = model('business.Business')->count();
 
@@ -77,5 +90,88 @@ class Index extends Controller
         }
 
         $this->success('查询回访记录成功', null, $VisitData);
+    }
+
+    public function receive()
+    {
+        foreach ($this->timeList as $item) {
+
+            $where = [
+                'status' => 'apply',
+                'applytime' => ['between', $item]
+            ];
+
+            $apply[] = $this->ReceiveModel->where($where)->count();
+
+            $where1 = [
+                'status' => 'allot',
+                'applytime' => ['between', $item]
+            ];
+
+            $allot[] = $this->ReceiveModel->where($where1)->count();
+
+            $where2 = [
+                'status' => 'recovery',
+                'applytime' => ['between', $item]
+            ];
+
+            $recovery[] = $this->ReceiveModel->where($where2)->count();
+        }
+
+        $data = [
+            'apply' => $apply,
+            'allot' => $allot,
+            'recovery' => $recovery
+        ];
+
+        $this->success('返回领取统计', '', $data);
+    }
+
+    public function order()
+    {
+        $data = [];
+
+        $paid  = $this->OrderModel->where('status', 1)->count();
+
+        $data[] = [
+            'name' => '已支付',
+            'value' => $paid
+        ];
+
+        $shipped = $this->OrderModel->where('status', 2)->count();
+        $data[] = [
+            'name' => '已发货',
+            'value' => $shipped
+        ];
+
+        $received = $this->OrderModel->where('status', 3)->count();
+        $data[] = [
+            'name' => '已收货',
+            'value' => $received
+        ];
+
+        $completed = $this->OrderModel->where('status', 4)->count();
+        $data[] = [
+            'name' => '已完成',
+            'value' => $completed
+        ];
+
+        $this->success('订单统计', '', $data);
+    }
+    public function source()
+    {
+        $Sourcelist = $this->SourceModel->select();
+
+        foreach ($Sourcelist as $item) {
+
+            $count = $this->BusinessModel->where('sourceid', $item['id'])->count();
+
+            $data[] = [
+                'name' => $item['name'],
+                'value' => $count
+            ];
+        }
+
+        $this->success('来源统计', '', $data);
     }
 }

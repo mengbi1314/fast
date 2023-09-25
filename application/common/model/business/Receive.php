@@ -33,11 +33,11 @@ class Receive extends Model
 
     public function admin()
     {
-        return $this->belongsTo('app\common\model\admin\Admin', 'applyid', 'id', [], 'LEFT')->setEagerlyType(0);
+        return $this->belongsTo('app\admin\model\Admin', 'applyid', 'id', [], 'LEFT')->setEagerlyType(0);
     }
 
     public function business()
     {
-        return $this->belongsTo('app\common\model\business\Business', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
+        return $this->belongsTo('app\common\model\Business\Business', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
     }
 }
