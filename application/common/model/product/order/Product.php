@@ -6,10 +6,14 @@ use think\Model;
 
 class Product extends Model
 {
-    protected $name = 'order_product';
+    protected $name = 'product_order';
 
-    public function products()
+    public function product()
     {
-        return $this->belongsTo('app\common\model\product\Product', 'proid', 'id')->setEagerlyType(0);
+        return $this->belongsTo('app\common\model\Product\product', 'proid', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
+    public function business()
+    {
+        return $this->belongsTo('app\common\model\Business\Business', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
     }
 }

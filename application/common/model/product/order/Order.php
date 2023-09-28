@@ -9,25 +9,20 @@ class Order extends Model
 {
     use SoftDelete;
 
-    //自动写入时间戳
     protected $autoWriteTimestamp = true;
 
-    //定义时间戳
     protected $createTime = 'createtime';
     protected $updateTime = false;
 
-    //软删除字段
     protected $deleteTime = 'deletetime';
 
     protected $name = 'order';
 
-    //追加字段
-    protected $append = [
+    protected  $append = [
         'status_text',
         'createtime_text'
     ];
 
-    //订单状态数据
     public function getStatusList()
     {
         return [
@@ -40,23 +35,49 @@ class Order extends Model
             '-2' => __('退款退货'),
             '-3' => __('售后中'),
             '-4' => __('退货审核成功'),
-            '-5' => __('退货审核失败'),
+            '-5' => __('退货审核失败')
         ];
     }
+
     public function getStatusTextAttr($value, $data)
     {
         $StatusList = $this->getStatusList();
 
-        return $StatusList[$data['status']];
+        $value = $value ? $value : (isset($data['status']) ? $data['status'] : '');
+        $list = $this->getStatusList();
+        return isset($list[$value]) ? $list[$value] : '';
     }
 
-    public function OrderProduct()
+    public function orderproduct()
     {
-        return $this->hasMany('app\common\model\product\order\Product', 'orderid', 'id');
+        return $this->belongsTo('app\common\model\Product\order\Product', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
     }
-
     public function getCreatetimeTextAttr($value, $data)
     {
-        return date('Y-m-d H:i:s', $data['createtime']);
+
+        return $this->belongsTo('app\common\model\Product\order\Product', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
+    public function product()
+    {
+        return $this->belongsTo('app\common\model\Product\Product', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
+
+    public function business()
+    {
+        return $this->belongsTo('app\common\model\Business\Business', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
+    }
+
+    public function getCommentStatusAttr($value, $data)
+    {
+        $busid = $data['busid'] ?? '';
+        $subid = $data['subid'] ?? '';
+
+        $comment = model('Subject.Comment')->where(['busid' => $busid, 'subid' => $subid])->find();
+
+        if ($comment) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
