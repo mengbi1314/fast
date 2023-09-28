@@ -150,7 +150,11 @@ class Business extends Model
 
     public function getMobileTextAttr($value, $data)
     {
-        $mobile = isset($data['mobile']) ? $data['mobile'] : '';
+        $mobile = $data['mobile'] ?? '';
+
+        if (empty($mobile)) {
+            return false;
+        }
 
         return substr_replace($mobile, '****', 3, 4);
     }
