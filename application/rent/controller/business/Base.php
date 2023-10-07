@@ -36,6 +36,7 @@ class Base extends Controller
             'auth' => 0,
             'money' => 0,
             'deal' => 0,
+            'salt' => $salt
         ];
 
         $result = $this->BusinessModel->validate('common/business/Business.register')->save($data);
@@ -45,5 +46,40 @@ class Base extends Controller
         } else {
             $this->success('注册成功');
         }
+    }
+
+    public function login()
+    {
+        $mobile = $this->request->param('mobile', '', 'trim');
+        $password = $this->request->param('password', '', 'trim');
+
+        $business = $this->BusinessModel->where(['mobile' => $mobile])->find();
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        $password = md5($password . $business['salt']);
+
+        if ($password != $business['password']) {
+            $this->error('密码错误');
+        }
+
+        $data = [
+            'id' => $business['id'],
+            'mobile' => $business['mobile'],
+            'mobile_text' => $business['mobile_text'],
+            'nickname' => $business['nickname'],
+            'email' => $business['email'],
+            'avatar_cdn' => $business['avatar_cdn'],
+            'gender' => $business['gender'],
+            'region_text' => $business['region_text'],
+            'province' => $business['province'],
+            'city' => $business['city'],
+            'district' => $business['district'],
+            'auth' => $business['auth']
+        ];
+
+        $this->success('登录成功', null, $data);
     }
 }
