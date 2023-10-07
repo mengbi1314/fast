@@ -73,6 +73,7 @@ class Base extends Controller
             'email' => $business['email'],
             'avatar_cdn' => $business['avatar_cdn'],
             'gender' => $business['gender'],
+            'gender' => $business['gender'],
             'region_text' => $business['region_text'],
             'province' => $business['province'],
             'city' => $business['city'],
