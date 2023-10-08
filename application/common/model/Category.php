@@ -3,6 +3,7 @@
 namespace app\common\model;
 
 use think\Model;
+use think\Env;
 
 /**
  * 分类模型
@@ -19,6 +20,8 @@ class Category extends Model
     protected $append = [
         'type_text',
         'flag_text',
+        'image_cdn',
+        'createtime_text'
     ];
 
     protected static function init()
@@ -83,5 +86,22 @@ class Category extends Model
             }
         })->order('weigh', 'desc')->select())->toArray();
         return $list;
+    }
+    public function getImageCdnAttr($value, $data)
+    {
+        $image = $data['image'] ?? '';
+
+        if (!$image || !is_file(ltrim($image, '/'))) {
+            $image = '/assets/img/qrcode.png';
+        }
+
+        $cdn = Env::get('site.url', config('site.url'));
+
+        return $cdn . ltrim($image, '/');
+    }
+
+    public function getCreatetimeTextAttr($value, $data)
+    {
+        return date('Y-m-d H:i:s', $data['createtime']);
     }
 }
