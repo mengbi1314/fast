@@ -248,8 +248,14 @@ class Subject extends Home
             'subid' => $subId,
             'busid' => $busId,
             'total' => $price,
-            'code' => generateSnowflakeId(1),
+            'code' => build_code('SU'),
         ];
+        // $OrderData = [
+        //     'subid' => $subid,
+        //     'busid' => $this->LoginBusiness['id'],
+        //     'total' => $subject['price'],
+        //     'code' => build_code('SU'),
+        // ];
 
         // 把数据插入数据表
         $OrderStatus = $this->OrderModel->validate('common/subject/Order')->save($OrderData);

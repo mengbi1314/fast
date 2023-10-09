@@ -3,32 +3,31 @@
 
 <link href="/assets/home/css/order.css" rel="stylesheet" />
 
+<!-- 头部 -->
 <header class="mui-bar mui-bar-nav mui-bar-nav-bg">
     <a id="icon-menu" style="touch-action: none;" class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
     <h1 class="mui-title">我的订单</h1>
 </header>
-<div class="mui-content">
-    <div class="page__bd" style="height: 100%;">
-        <div class="weui-tab mescroll" id="orderList">
-            <div class="weui-tab__panel">
-            </div>
+
+<div class="page__bd" style="height: 100%;">
+    <div class="weui-tab mescroll" id="orderList">
+        <div class="weui-tab__panel">
         </div>
     </div>
 </div>
+
 <!-- 下拉刷新 上拉加载的插件 -->
 <script src="/assets/home/plugin/mescroll/mescroll.min.js"></script>
-<!-- <script src="/assets/utils/formatDate.js"></script> -->
-<script src="/assets/utils/day.js"></script>
 
 <script>
     // 当前页
-    let page = 1;
+    var page = 1;
 
     // 每页查询多少条
-    let limit = 10;
+    var limit = 10;
 
     //初始化下拉刷新插件
-    let scroll = new MeScroll('orderList', {
+    var scroll = new MeScroll('orderList', {
         down: {
             //下拉
             auto: false, //是否在初始化完毕之后自动执行下拉回调callback; 默认true
@@ -61,7 +60,7 @@
         limit = current.size
 
         //组装数据
-        let data = {
+        var data = {
             page: page,
             limit: limit
         }
@@ -73,25 +72,30 @@
             dataType: 'json',
             success: function (res) {
                 if (res.code === 0) {
+                    // 提示信息
+                    mui.toast(res.msg);
+
                     // 隐藏下拉刷新和上拉加载的状态
                     scroll.endBySize(0, 0);
+                    return;
                 }
 
-                let list = res.data.list;
-                let count = res.data.count;
+                var list = res.data.list;
+                var count = res.data.count;
+
                 // 隐藏下拉刷新和上拉加载的状态
                 scroll.endBySize(list.length, count);
 
                 // 输出列表
-                fetchList(list);
+                FetchList(list);
             }
         })
     }
 
     //数据渲染
-    function fetchList(list) {
-        let str = '<br/>'
-        for (let item of list) {
+    function FetchList(list) {
+        var str = ''
+        for (var item of list) {
             str += `
             <div class="weui-form-preview">
                 <div class="weui-form-preview__hd">
@@ -107,16 +111,11 @@
                     </div>
                     <div class="weui-form-preview__item">
                         <label class="weui-form-preview__label">购买时间</label>
-                        <span class="weui-form-preview__value">
-                            ${dayjs.unix(item.createtime).format('YYYY/MM/DD HH:mm:ss')}
-                        </span>
+                        <span class="weui-form-preview__value">${item.createtime}</span>
                     </div>
                 </div>
                 <div class="weui-form-preview__ft">
-                    <a class="weui-form-preview__btn weui-form-preview__btn_default" 
-                    href="${item.comment_status == false
-                    ? `{:url('/home/subject/comment/add')}?orderid=${item.id}`
-                    : 'javascript:;'}">${item.comment_status ? '已评价' : '评价111'}</a>
+                    <a class="weui-form-preview__btn weui-form-preview__btn_default" href="${item.comment_status == false ? `{:url('/home/subject/comment/add')}?orderid=${item.id}` : 'javascript:;'}">${item.comment_status ? '已评价' : '评价'}</a>
 
                     <a class="weui-form-preview__btn weui-form-preview__btn_primary"
                         href="{:url('/home/subject/subject/info')}?id=${item.subject.id}">立即查看</a>
@@ -129,6 +128,9 @@
         $("#orderList .weui-tab__panel").append(str)
     }
 
-
+    // 重写订单的返回按钮事件
+    $('.mui-action-back').click(function () {
+        location.href = `{:url('/home/business/index')}`;
+    });
 
 </script>
