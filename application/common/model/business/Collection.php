@@ -1,6 +1,6 @@
 <?php
 
-namespace app\common\model\Busbusinessiness;
+namespace app\common\model\business;
 
 use think\Model;
 
