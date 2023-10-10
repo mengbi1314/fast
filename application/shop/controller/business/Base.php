@@ -2,7 +2,9 @@
 
 namespace app\shop\controller\business;
 
+use think\Db;
 use think\Controller;
+use app\common\library\Email;
 
 class Base extends Controller
 {
@@ -221,6 +223,151 @@ class Base extends Controller
             }
 
             $this->success('更新资料成功');
+        }
+    }
+
+
+    //发送邮箱验证码
+    public function sendCode()
+    {
+        $id = $this->request->param('id', '', 'trim');
+        $email = $this->request->param('email', '', 'trim');
+
+        $where = [
+            'id' => $id,
+            'email' => $email,
+        ];
+
+        $business = $this->BusinessModel->where($where)->find();
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        Db::startTrans();
+
+        //生成验证码
+        $code = build_ranstr(4);
+
+        $Ems = model('Ems')->where('email', $email)->find();
+
+        if ($Ems) {
+            //更新
+            $data = [
+                'id'    =>  $Ems['id'],
+                'code'  =>  $code,
+                'times' =>  $Ems['times'] + 1,
+            ];
+
+            $result = model('Ems')->isUpdate(true)->save($data);
+        } else {
+
+            //添加
+            $data = [
+                'event' =>  '邮箱认证',
+                'email' =>  $email,
+                'code'  =>  $code,
+                'times' =>  1,
+                'ip'    =>  $this->request->ip(),
+            ];
+
+            $result = model('Ems')->validate('common/Ems')->save($data);
+        }
+
+        if (!$result || $result === false) {
+            $this->error(model('Ems')->getError());
+        }
+
+        /* 
+             网易
+                 smtp.163.com
+ 
+             qq
+                 smtp.qq.com
+ 
+             端口
+                 465
+                 注意：服务器的安全组或者防火墙设置465端口开放
+         */
+
+        $content = " <h1>欢迎认证Vue商城</h1>
+         您的验证码为：<b>$code</b>";
+
+        // 实例化发送邮件类
+        $Email = new Email();
+        // 获取发件人的邮箱 config() 获取配置项或者设置配置项
+        $fromEmail = config('site.mail_from');
+        $fromUser = config('site.mail_smtp_user');
+
+        // 设置邮件并且发送
+        //自定义 ->from($fromEmail, $fromUser)
+        $emailStatus = $Email->from($fromEmail, $fromUser)->subject('Vue商城邮箱认证')->message($content)->to($email)->send();
+
+        if ($result === false || $emailStatus === false) {
+            Db::rollback();
+            $this->error($Email->getError());
+        } else {
+            Db::commit();
+            $this->success('发送成功');
+        }
+    }
+
+    //邮箱认证
+    public function email()
+    {
+        if ($this->request->isPost()) {
+            $id = $this->request->post('id');
+            $code = strtoupper($this->request->post('code', '', 'trim'));
+            $email = $this->request->post('email', '', 'trim');
+
+            $res = model('Ems')->where('email', $email)->find();
+
+            if (!$res) {
+                $this->error('该邮箱不存在');
+            }
+
+            if (strtoupper($res['code']) != $code) {
+                $this->error('验证码错误');
+            }
+
+            $endTime = $res['createtime'] + 300; // 300秒
+
+            $endStatus = time() > $endTime; // 验证码过期
+
+            if ($endStatus) {
+                model('Ems')->destroy($res['id']);
+                $this->error('验证码已过期');
+            }
+
+            //开启business和ems的事务
+            $this->BusinessModel->startTrans();
+            model('Ems')->startTrans();
+
+            //更新用户认证状态
+            $busres = $this->BusinessModel->isUpdate(true)->save(['auth' => 1], ['id' => $id]);
+
+            if ($busres === false) {
+                $this->error($this->BusinessModel->getError());
+            }
+
+            //认证成功后删除验证码
+            $EmsStatus = model('Ems')->destroy($res['id']);
+
+            if ($EmsStatus === false) {
+                $this->BusinessModel->rollback(); // 多表操作->事务回滚
+                $this->error(model('Ems')->getError());
+            }
+
+            //大判断
+            if ($busres === false || $EmsStatus === false) {
+                $this->BusinessModel->rollback(); // 多表操作->事务回滚
+                model('Ems')->rollback();
+                $this->error('认证失败');
+            } else {
+                $this->BusinessModel->commit();
+                model('Ems')->commit();
+                $this->success('认证成功');
+            }
         }
     }
 }
