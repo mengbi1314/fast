@@ -9,20 +9,25 @@ class Order extends Model
 {
     use SoftDelete;
 
+    // 自动写入时间戳
     protected $autoWriteTimestamp = true;
 
+    // 定义时间戳字段名
     protected $createTime = 'createtime';
     protected $updateTime = false;
 
+    // 软删除字段
     protected $deleteTime = 'deletetime';
 
     protected $name = 'order';
 
-    protected  $append = [
+    // 追加字段
+    protected $append = [
         'status_text',
         'createtime_text'
     ];
 
+    // 订单状态数据
     public function getStatusList()
     {
         return [
@@ -43,41 +48,16 @@ class Order extends Model
     {
         $StatusList = $this->getStatusList();
 
-        $value = $value ? $value : (isset($data['status']) ? $data['status'] : '');
-        $list = $this->getStatusList();
-        return isset($list[$value]) ? $list[$value] : '';
+        return $StatusList[$data['status']];
     }
 
-    public function orderproduct()
+    public function OrderProduct()
     {
-        return $this->belongsTo('app\common\model\Product\order\Product', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
+        return $this->hasMany('app\common\model\product\order\Product', 'orderid', 'id');
     }
+
     public function getCreatetimeTextAttr($value, $data)
     {
-
-        return $this->belongsTo('app\common\model\Product\order\Product', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
-    }
-    public function product()
-    {
-        return $this->belongsTo('app\common\model\Product\Product', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
-    }
-
-    public function business()
-    {
-        return $this->belongsTo('app\common\model\Business\Business', 'busid', 'id', [], 'LEFT')->setEagerlyType(0);
-    }
-
-    public function getCommentStatusAttr($value, $data)
-    {
-        $busid = $data['busid'] ?? '';
-        $subid = $data['subid'] ?? '';
-
-        $comment = model('Subject.Comment')->where(['busid' => $busid, 'subid' => $subid])->find();
-
-        if ($comment) {
-            return true;
-        } else {
-            return false;
-        }
+        return date('Y-m-d H:i:s', $data['createtime']);
     }
 }
