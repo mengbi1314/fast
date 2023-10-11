@@ -392,4 +392,23 @@ class Base extends Controller
 
         $this->success('查询收藏数据成功', null, ['count' => $count, 'list' => $collection]);
     }
+
+    // 消费记录
+    public function record()
+    {
+        $id = $this->request->param('busid', 0, 'trim');
+
+        $business = model('business.Business')->find($id);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+        $record = model('business.Record')->where('busid', $id)->order('id desc')->select();
+
+        if (!empty($record)) {
+            $this->success('查询用户消费纪律成功', null, $record);
+        } else {
+            $this->error('暂无用户消费记录');
+        }
+    }
 }
