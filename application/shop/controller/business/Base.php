@@ -370,4 +370,26 @@ class Base extends Controller
             }
         }
     }
+
+    // 我的收藏
+    public function collection()
+    {
+        $busid = $this->request->param('busid', '', 'trim');
+
+        $res = $this->BusinessModel->find($busid);
+
+        if (!$res) {
+            $this->error(__('用户不存在'));
+        }
+
+        $collection = model('business.Collection')->with('product')->where('busid', $busid)->select();
+
+        if (!$collection) {
+            $this->error(__('暂无收藏'));
+        }
+
+        $count = model('product.Product')->count();
+
+        $this->success('查询收藏数据成功', null, ['count' => $count, 'list' => $collection]);
+    }
 }
