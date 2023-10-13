@@ -2,79 +2,130 @@
 
 namespace app\common\model\business;
 
-use think\Env;
+use app\common\model\Region;
 use think\Model;
+use traits\model\SoftDelete;
 
 class Business extends Model
 {
-    // 指定的数据表
+    // 指定数据表
     protected $name = 'business';
 
-    // 开启自动写入时间戳
+    // 开启自动写入时间戳字段
     protected $autoWriteTimestamp = true;
 
     // 定义时间戳字段名
     protected $createTime = 'createtime';
     protected $updateTime = false;
 
-    // 追加数据表的不存在字段
+    use SoftDelete;
+    protected $deleteTime = 'deletetime';
+
+    // 追加数据表不存在的字段
     protected $append = [
-        // 文本 => text 资源 => cdn 总数 => count
         'mobile_text',
         'avatar_cdn',
         'region_text',
         'deal_text',
-        'gender_text'
+        'createtime_text',
+        'deletetime_text',
+        'gender_text',
+        'sourceid_text',
     ];
 
-    // 定义一个获取器
+    // 获取器
     public function getMobileTextAttr($value, $data)
     {
-        $mobile = $data['mobile'] ?? '';
-
-        if (empty($mobile)) {
-            return false;
-        }
-
-        return substr_replace($mobile, '****', 3, 4);
+        return substr_replace($data['mobile'], '****', 3, 4);
     }
 
-    // 头像获取器
-    public function getAvatarCdnAttr($value, $data)
+    public function getSourceidTextAttr($value, $data)
     {
+        $value = $value ? $value : (isset($data['sourceid']) ? $data['sourceid'] : 0);
+        $list = $this->getSourceidList();
+        return isset($list[$value]) ? $list[$value] : '未知';
+    }
+
+    public function getSourceidList()
+    {
+        $res = model('business.Source')->column('id,name');
+        return $res;
+    }
+
+    public function getGenderList()
+    {
+        return ['0' => __('保密'), '1' => __('男'), '2' => __('女')];
+    }
+
+    public function getGenderTextAttr($value, $data)
+    {
+        $value = $value ? $value : (isset($data['gender']) ? $data['gender'] : 0);
+        $list = $this->getGenderList();
+        return isset($list[$value]) ? $list[$value] : '未知';
+    }
+
+    // 定义日期格式
+    public function getCreatetimeTextAttr($value, $data)
+    {
+        $createtime = isset($data['createtime']) ? $data['createtime'] : 0;
+
+        return date('Y-m-d H:i', $createtime);
+    }
+
+    // 定义日期格式
+    public function getDeletetimeTextAttr($value, $data)
+    {
+        $deletetime = isset($data['deletetime']) ? $data['deletetime'] : 0;
+
+        return date('Y-m-d H:i', $deletetime);
+    }
+
+    public function getAvatarCdnAttr($values, $data)
+    {
+        $cdn = config('site.url');
+
         $avatar = $data['avatar'] ?? '';
 
         if (empty($avatar)) {
-            $avatar = 'assets/home/images/avatar.jpg';
+            $avatar = '/assets/img/avatar.png';
         }
 
-        // 获取网站域名
-        $cdn = Env::get('site.url', config('site.url'));
-
-        return $cdn . $avatar;
+        return $cdn . ltrim($avatar, '/');
     }
 
     public function getRegionTextAttr($value, $data)
     {
-        $region_text = '';
-
-        $province = model('Region')->where(['code' => $data['province']])->value('name');
-        $city = model('Region')->where(['code' => $data['city']])->value('name');
-        $district = model('Region')->where(['code' => $data['district']])->value('name');
-
+        $province = model('Region')->where('code', $data['province'])->value('name');
+        $city = model('Region')->where('code', $data['city'])->value('name');
+        $district = model('Region')->where('code', $data['district'])->value('name');
         if ($province) {
-            $region_text = $province;
+            $value = $province;
         }
-
         if ($city) {
-            $region_text .= '-' . $city;
+            $value .= $city;
         }
-
         if ($district) {
-            $region_text .=  '-' . $district;
+            $value .= $district;
         }
 
-        return $region_text;
+        return $value;
+    }
+
+    public function getDealList()
+    {
+        return ['0' => __('未成交'), '1' => __('已成交')];
+    }
+
+    public function getDealTextAttr($value, $data)
+    {
+        $value = $value ? $value : (isset($data['deal']) ? $data['deal'] : '');
+        $list = $this->getDealList();
+        return isset($list[$value]) ? $list[$value] : '';
+    }
+
+    public function region()
+    {
+        return $this->belongsTo('app\common\model\Region', 'district', 'code', [], 'LEFT')->setEagerlyType(0);
     }
 
     public function source()
@@ -82,17 +133,8 @@ class Business extends Model
         return $this->belongsTo('app\common\model\business\Source', 'sourceid', 'id', [], 'LEFT')->setEagerlyType(0);
     }
 
-    public function getDealTextAttr($value, $data)
+    public function admin()
     {
-        $list = [0 => '未成交', 1 => '已成交'];
-
-        return $list[$data['deal']];
-    }
-
-    public function getGenderTextAttr($value, $data)
-    {
-        $genderList = [0 => '保密', 1 => '男', 2 => '女'];
-
-        return $genderList[$data['gender']];
+        return $this->belongsTo('app\admin\model\Admin', 'adminid', 'id', [], 'LEFT')->setEagerlyType(0);
     }
 }
