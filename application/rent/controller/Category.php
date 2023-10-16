@@ -85,4 +85,56 @@ class Category extends Controller
 
         $this->success('查询成功', null, $data);
     }
+
+    public function collection()
+    {
+        // 接收参数
+        $busid = $this->request->param('busid', 0, 'trim');
+        $cateid = $this->request->param('cateid', 0, 'trim');
+
+        // 先查询该文章是否存在
+        $cate = $this->CategoryModel->find($cateid);
+
+        if (!$cate) {
+            $this->error('文章不存在');
+        }
+
+        $business = model('business.Business')->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        // 先通过用户id和文章id查询用户收藏表是否有该记录，如果有的话，那么就是取消收藏，否则收藏
+
+        // 实例化一个收藏模型
+        $CollectionModel = model('business.Collection');
+
+        $collection = $CollectionModel->where(['busid' => $busid, 'cateid' => $cateid])->find();
+
+        $msg = '未知';
+
+        if ($collection) {
+            // 直接删除
+            $result = $CollectionModel->destroy($collection['id']);
+
+            $msg = '取消收藏';
+        } else {
+            // 收藏 => 往用户收藏表插入一条记录 => 前提需要插入的数据
+            $data = [
+                'busid' => $busid,
+                'cateid' => $cateid,
+            ];
+
+            $result = $CollectionModel->validate('common/business/Collection.cate')->save($data);
+
+            $msg = '收藏';
+        }
+
+        if ($result === false) {
+            $this->error($CollectionModel->getError());
+        } else {
+            $this->success("{$msg}成功");
+        }
+    }
 }
