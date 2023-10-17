@@ -3,6 +3,7 @@
 namespace app\rent\controller\business;
 
 use think\Controller;
+use think\Db;
 
 class Base extends Controller
 {
@@ -73,7 +74,7 @@ class Base extends Controller
             'email' => $business['email'],
             'avatar_cdn' => $business['avatar_cdn'],
             'gender' => $business['gender'],
-            'gender' => $business['gender'],
+            'gender_text' => $business['gender_text'],
             'region_text' => $business['region_text'],
             'province' => $business['province'],
             'city' => $business['city'],
@@ -109,7 +110,7 @@ class Base extends Controller
             $repass = md5($params['password'] . $business['salt']);
 
             if ($repass == $business['password']) {
-                $this->error('新密码不能与旧密码一致');
+                $this->error('新密码不能与原密码一致');
             }
 
             $salt = build_ranstr();
@@ -140,10 +141,11 @@ class Base extends Controller
             if ($res['code'] === 0) {
                 $this->error($res['msg']);
             }
+
             $data['avatar'] = $res['data'];
         }
 
-        //更新数据表
+        // 更新数据表
         $result = $this->BusinessModel->validate('common/business/Business.profile')->isUpdate(true)->save($data);
 
         if ($result === false) {
@@ -174,7 +176,34 @@ class Base extends Controller
                 'district' => $business['district'],
                 'auth' => $business['auth']
             ];
+
             $this->success('更新成功', null, $data);
         }
+    }
+
+    public function count()
+    {
+        $busid = $this->request->param('busid', 0, 'trim');
+
+        $business = $this->BusinessModel->find($busid);
+
+        if (!$business) {
+            $this->error('用户不存在');
+        }
+
+        // 分别获取收藏文章，收藏商品，订单的数据总数
+        $CateCount = model('business.Collection')->where(['busid' => $busid, 'cateid' => ['EXP', Db::raw('IS NOT NULL')]])->count();
+
+        $ProductCount = model('business.Collection')->where(['busid' => $busid, 'proid' => ['EXP', Db::raw('IS NOT NULL')]])->count();
+
+        $OrderCount = model('product.Lease')->where(['busid' => $busid])->count();
+
+        $data = [
+            'CateCount' => $CateCount,
+            'ProductCount' => $ProductCount,
+            'OrderCount' => $OrderCount
+        ];
+
+        $this->success('查询成功', null, $data);
     }
 }
